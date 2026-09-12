@@ -13,7 +13,6 @@ async function bootstrap() {
   );
   app.enableShutdownHooks();
   app.useGlobalPipes(new StandardSchemaValidationPipe({ transform: true }));
-
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
