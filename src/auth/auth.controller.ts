@@ -1,22 +1,25 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
+  Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { AuthService } from './auth.service.js';
+import { type AuthenticatedRequest, AuthResult } from './auth.types.js';
+import { type LoginUserInput, loginUserInput } from './dto/login.dto.js';
+import { LogoutResponse, logoutResponseSchema } from './dto/logout.dto.js';
 import {
-  AuthResponse,
-  AuthResult,
-  authResponseSchema,
-  type LoginUserInput,
-  loginUserInput,
   type RegisterUserInput,
   registerUserInput,
-} from './auth.dto.js';
-import { AuthService } from './auth.service.js';
+} from './dto/register.dto.js';
+import { AuthResponse, authResponseSchema } from './dto/shared.dto.js';
+import { SessionGuard } from './session.guard.js';
 
 @Controller('auth')
 export class AuthController {
@@ -41,6 +44,30 @@ export class AuthController {
     const result = await this.authService.registerUser(user);
 
     return await this.completeAuthentication(res, result);
+  }
+
+  @Get('/me')
+  @UseGuards(SessionGuard)
+  getAuth(@Req() request: AuthenticatedRequest) {
+    return {
+      userId: request.auth.userId,
+    };
+  }
+
+  @Post('/logout')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(SessionGuard)
+  async logout(
+    @Req() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<LogoutResponse> {
+    const logoutResponse = await this.authService.logoutUser(
+      req.auth.sessionId,
+    );
+
+    const parsedResponse = logoutResponseSchema.parse(logoutResponse);
+    response.clearCookie('session');
+    return parsedResponse;
   }
 
   private async completeAuthentication(response: Response, result: AuthResult) {

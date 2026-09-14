@@ -7,13 +7,11 @@ import {
 import { Injectable } from '@nestjs/common';
 import type { Uuid } from '../common/schema/uuid.schema.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import {
-  AuthResult,
-  LoginUserInput,
-  RegisterUserInput,
-  Session,
-} from './auth.dto.js';
 import { InvalidCredentialsError, UserExistsError } from './auth.errors.js';
+import { AuthResult, Session } from './auth.types.js';
+import { LoginUserInput } from './dto/login.dto.js';
+import { LogoutResponse } from './dto/logout.dto.js';
+import { RegisterUserInput } from './dto/register.dto.js';
 
 const SCRYPT_COST = 16_384;
 const SCRYPT_BLOCK_SIZE = 8;
@@ -156,7 +154,15 @@ export class AuthService {
   }
 
   // logout a user
-  async logoutUser(): Promise<void> {}
+  async logoutUser(sessionId: Uuid): Promise<LogoutResponse> {
+    await this.prisma.db.orm.public.Session.where({ id: sessionId }).update({
+      revokedAt: new Date().toISOString(),
+    });
+
+    return {
+      message: 'Logged out successfully',
+    };
+  }
 
   // create a session for the user
   private async createSession(userId: Uuid): Promise<Session> {
@@ -176,6 +182,28 @@ export class AuthService {
       token,
       expiresAt,
     };
+  }
+
+  async validateSession(token: string) {
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+
+    const session = await this.prisma.db.orm.public.Session.first({
+      tokenHash,
+    });
+
+    if (!session) {
+      return null;
+    }
+
+    if (session.revokedAt != null) {
+      return null;
+    }
+
+    if (new Date(session.expiresAt).getTime() <= Date.now()) {
+      return null;
+    }
+
+    return session;
   }
 
   // remove a user

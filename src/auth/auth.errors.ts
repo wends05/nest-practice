@@ -5,6 +5,7 @@ export const AUTH_ERROR_CODE = {
   INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
   USER_EXISTS: 'USER_EXISTS',
   USER_NOT_FOUND: 'USER_NOT_FOUND',
+  SESSION_INVALID: 'SESSION_INVALID',
 } as const;
 
 export class InvalidCredentialsError extends AppException {
@@ -33,6 +34,16 @@ export class UserNotFoundError extends AppException {
       HttpStatus.NOT_FOUND,
       AUTH_ERROR_CODE.USER_NOT_FOUND,
       'User not found',
+    );
+  }
+}
+
+export class SessionInvalidError extends AppException {
+  constructor() {
+    super(
+      HttpStatus.UNAUTHORIZED,
+      AUTH_ERROR_CODE.SESSION_INVALID,
+      'Session invalid',
     );
   }
 }
