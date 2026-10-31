@@ -2,7 +2,7 @@ import { HttpStatus } from '@nestjs/common';
 import { AppException } from '../common/errors/app.exception';
 
 export const TICKET_ERROR_CODE = {
-  NOT_FOUND: 'TICKET_NOT_FOUND',
+  TICKET_NOT_FOUND: 'TICKET_NOT_FOUND',
   TICKET_OWNED: 'TICKET_OWNED',
   TICKET_NOT_OWNED: 'TICKET_NOT_OWNED',
   TICKET_NOT_EDITABLE: 'TICKET_NOT_EDITABLE',
@@ -13,7 +13,7 @@ export class TicketNotFoundException extends AppException {
   constructor(customMessage?: string) {
     super(
       HttpStatus.NOT_FOUND,
-      TICKET_ERROR_CODE.NOT_FOUND,
+      TICKET_ERROR_CODE.TICKET_NOT_FOUND,
       customMessage ?? 'This ticket does not exist or may have been deleted.',
     );
   }

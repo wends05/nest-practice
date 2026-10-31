@@ -1,5 +1,3 @@
-// src/common/errors/app.exception.ts
-
 import { HttpException, HttpStatus } from '@nestjs/common';
 import type { ErrorCode } from './error-codes.js';
 

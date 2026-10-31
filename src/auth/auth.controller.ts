@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { env } from '../config/env.js';
 import { AuthService } from './auth.service.js';
 import { type AuthenticatedRequest, AuthResult } from './auth.types.js';
 import { type LoginUserInput, loginUserInputSchema } from './dto/login.dto.js';
@@ -77,7 +78,7 @@ export class AuthController {
     // (usually after login or registration of account)
     response.cookie('session', result.session.token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
       expires: result.session.expiresAt,
