@@ -1,0 +1,44 @@
+[
+  {
+    "id": "column.public.Ticket.reply",
+    "label": "Add column \"reply\" to \"Ticket\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "reply",
+        "table": "Ticket"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"reply\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Ticket",
+          "reply"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"reply\"",
+        "sql": "ALTER TABLE \"public\".\"Ticket\" ADD COLUMN \"reply\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"reply\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Ticket",
+          "reply"
+        ]
+      }
+    ]
+  }
+]

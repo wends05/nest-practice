@@ -1,28 +1,16 @@
 import {
   defineContract,
-  enumType,
-  member,
+  nativeEnum,
+  pg,
 } from '@prisma/orm-postgres/contract-builder';
 
-const USER_ROLE = enumType(
-  'USER_ROLE',
-  {
-    codecId: 'pg/text@1',
-    nativeType: 'text',
-  } as const,
-  member('ADMIN'),
-  member('USER'),
-);
+export const USER_ROLE = nativeEnum('USER_ROLE', 'ADMIN', 'USER');
 
-const TICKET_STATUS = enumType(
+export const TICKET_STATUS = nativeEnum(
   'TICKET_STATUS',
-  {
-    codecId: 'pg/text@1',
-    nativeType: 'text',
-  } as const,
-  member('OPEN'),
-  member('ASSIGNED'),
-  member('CLOSED'),
+  'OPEN',
+  'ASSIGNED',
+  'CLOSED',
 );
 
 export const contract = defineContract({}, ({ field, model, rel }) => {
@@ -30,10 +18,12 @@ export const contract = defineContract({}, ({ field, model, rel }) => {
     fields: {
       id: field.id.uuidv7String(),
       ownedBy: field.uuidString(),
-      assignedTo: field.uuidString(),
+      assignedTo: field.uuidString().optional(),
       title: field.text(),
       content: field.text(),
-      status: field.namedType(TICKET_STATUS).default('OPEN'),
+      reply: field.text().optional(),
+      status: field.column(pg.enum(TICKET_STATUS)).default('OPEN'),
+      createdAt: field.temporal.createdAt(),
     },
   });
 
@@ -42,7 +32,7 @@ export const contract = defineContract({}, ({ field, model, rel }) => {
       id: field.id.uuidv7String(),
       name: field.text(),
       username: field.text().unique(),
-      role: field.namedType(USER_ROLE).default('USER'),
+      role: field.column(pg.enum(USER_ROLE)).default('USER'),
       passwordHash: field.text(),
     },
   });

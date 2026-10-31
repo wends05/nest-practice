@@ -33,7 +33,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'1fe52f4491cfaf0f6ba85e90dc2704ee0d6e89a9a791264f2eaf06eaa2a51bc6'>;
+  StorageHashBase<'11c287e5f580ea9812cf1322bee0b4af234bf5da6d4d8a605e9dc980b8209911'>;
 export type ExecutionHash =
   ExecutionHashBase<'f2b083aa11bd0d57eb963bfc10e1fea76e61e9cace95bbfe86f9a9a506a4f2cb'>;
 export type ProfileHash =
@@ -252,16 +252,18 @@ export type FieldOutputTypes = {
     readonly Ticket: {
       readonly id: Char<36>;
       readonly ownedBy: Char<36>;
-      readonly assignedTo: Char<36>;
+      readonly assignedTo: Char<36> | null;
       readonly title: CodecTypes['pg/text@1']['output'];
       readonly content: CodecTypes['pg/text@1']['output'];
-      readonly status: CodecTypes['pg/text@1']['output'];
+      readonly reply: CodecTypes['pg/text@1']['output'] | null;
+      readonly status: 'OPEN' | 'ASSIGNED' | 'CLOSED';
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
     readonly User: {
       readonly id: Char<36>;
       readonly name: CodecTypes['pg/text@1']['output'];
       readonly username: CodecTypes['pg/text@1']['output'];
-      readonly role: CodecTypes['pg/text@1']['output'];
+      readonly role: 'ADMIN' | 'USER';
       readonly passwordHash: CodecTypes['pg/text@1']['output'];
     };
   };
@@ -279,16 +281,18 @@ export type FieldInputTypes = {
     readonly Ticket: {
       readonly id: CodecTypes['sql/char@1']['input'];
       readonly ownedBy: CodecTypes['sql/char@1']['input'];
-      readonly assignedTo: CodecTypes['sql/char@1']['input'];
+      readonly assignedTo: CodecTypes['sql/char@1']['input'] | null;
       readonly title: CodecTypes['pg/text@1']['input'];
       readonly content: CodecTypes['pg/text@1']['input'];
-      readonly status: CodecTypes['pg/text@1']['input'];
+      readonly reply: CodecTypes['pg/text@1']['input'] | null;
+      readonly status: 'OPEN' | 'ASSIGNED' | 'CLOSED';
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
     readonly User: {
       readonly id: CodecTypes['sql/char@1']['input'];
       readonly name: CodecTypes['pg/text@1']['input'];
       readonly username: CodecTypes['pg/text@1']['input'];
-      readonly role: CodecTypes['pg/text@1']['input'];
+      readonly role: 'ADMIN' | 'USER';
       readonly passwordHash: CodecTypes['pg/text@1']['input'];
     };
   };
@@ -304,18 +308,20 @@ export type StorageColumnTypes = {
       readonly userId: Char<36>;
     };
     readonly Ticket: {
-      readonly assignedTo: Char<36>;
+      readonly assignedTo: Char<36> | null;
       readonly content: CodecTypes['pg/text@1']['output'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly id: Char<36>;
       readonly ownedBy: Char<36>;
-      readonly status: CodecTypes['pg/text@1']['output'];
+      readonly reply: CodecTypes['pg/text@1']['output'] | null;
+      readonly status: 'OPEN' | 'ASSIGNED' | 'CLOSED';
       readonly title: CodecTypes['pg/text@1']['output'];
     };
     readonly User: {
       readonly id: Char<36>;
       readonly name: CodecTypes['pg/text@1']['output'];
       readonly passwordHash: CodecTypes['pg/text@1']['output'];
-      readonly role: CodecTypes['pg/text@1']['output'];
+      readonly role: 'ADMIN' | 'USER';
       readonly username: CodecTypes['pg/text@1']['output'];
     };
   };
@@ -331,18 +337,20 @@ export type StorageColumnInputTypes = {
       readonly userId: CodecTypes['sql/char@1']['input'];
     };
     readonly Ticket: {
-      readonly assignedTo: CodecTypes['sql/char@1']['input'];
+      readonly assignedTo: CodecTypes['sql/char@1']['input'] | null;
       readonly content: CodecTypes['pg/text@1']['input'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly id: CodecTypes['sql/char@1']['input'];
       readonly ownedBy: CodecTypes['sql/char@1']['input'];
-      readonly status: CodecTypes['pg/text@1']['input'];
+      readonly reply: CodecTypes['pg/text@1']['input'] | null;
+      readonly status: 'OPEN' | 'ASSIGNED' | 'CLOSED';
       readonly title: CodecTypes['pg/text@1']['input'];
     };
     readonly User: {
       readonly id: CodecTypes['sql/char@1']['input'];
       readonly name: CodecTypes['pg/text@1']['input'];
       readonly passwordHash: CodecTypes['pg/text@1']['input'];
-      readonly role: CodecTypes['pg/text@1']['input'];
+      readonly role: 'ADMIN' | 'USER';
       readonly username: CodecTypes['pg/text@1']['input'];
     };
   };
@@ -423,7 +431,7 @@ type ContractBase = Omit<
                 readonly assignedTo: {
                   readonly nativeType: 'character';
                   readonly codecId: 'sql/char@1';
-                  readonly nullable: false;
+                  readonly nullable: true;
                   readonly typeParams: { readonly length: 36 };
                 };
                 readonly title: {
@@ -436,14 +444,26 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
                 };
-                readonly status: {
+                readonly reply: {
                   readonly nativeType: 'text';
                   readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly status: {
+                  readonly nativeType: 'TICKET_STATUS';
+                  readonly codecId: 'pg/enum@1';
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'OPEN'>;
+                    readonly value: DefaultLiteralValue<'pg/enum@1', 'OPEN'>;
                   };
+                  readonly typeParams: { readonly typeName: 'TICKET_STATUS' };
+                };
+                readonly createdAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                 };
               };
               primaryKey: { readonly columns: readonly ['id'] };
@@ -470,13 +490,14 @@ type ContractBase = Omit<
                   readonly nullable: false;
                 };
                 readonly role: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
+                  readonly nativeType: 'USER_ROLE';
+                  readonly codecId: 'pg/enum@1';
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'USER'>;
+                    readonly value: DefaultLiteralValue<'pg/enum@1', 'USER'>;
                   };
+                  readonly typeParams: { readonly typeName: 'USER_ROLE' };
                 };
                 readonly passwordHash: {
                   readonly nativeType: 'text';
@@ -488,6 +509,16 @@ type ContractBase = Omit<
               uniques: readonly [{ readonly columns: readonly ['username'] }];
               indexes: readonly [];
               foreignKeys: readonly [];
+            };
+          };
+          readonly valueSet: {
+            readonly TICKET_STATUS: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['OPEN', 'ASSIGNED', 'CLOSED'];
+            };
+            readonly USER_ROLE: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['ADMIN', 'USER'];
             };
           };
         };
@@ -594,7 +625,7 @@ type ContractBase = Omit<
                 };
               };
               readonly assignedTo: {
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly type: {
                   readonly kind: 'scalar';
                   readonly codecId: 'sql/char@1';
@@ -609,9 +640,24 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly reply: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly status: {
                 readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/enum@1';
+                  readonly typeParams: { readonly typeName: 'TICKET_STATUS' };
+                };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                };
               };
             };
             readonly relations: {
@@ -641,7 +687,9 @@ type ContractBase = Omit<
                 readonly assignedTo: { readonly column: 'assignedTo' };
                 readonly title: { readonly column: 'title' };
                 readonly content: { readonly column: 'content' };
+                readonly reply: { readonly column: 'reply' };
                 readonly status: { readonly column: 'status' };
+                readonly createdAt: { readonly column: 'createdAt' };
               };
             };
           };
@@ -665,7 +713,11 @@ type ContractBase = Omit<
               };
               readonly role: {
                 readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/enum@1';
+                  readonly typeParams: { readonly typeName: 'USER_ROLE' };
+                };
               };
               readonly passwordHash: {
                 readonly nullable: false;

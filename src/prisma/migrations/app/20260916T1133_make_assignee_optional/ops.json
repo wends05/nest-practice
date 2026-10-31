@@ -1,0 +1,45 @@
+[
+  {
+    "id": "alterNullability.dropNotNull.Ticket.assignedTo",
+    "label": "Drop NOT NULL on \"Ticket\".\"assignedTo\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "assignedTo",
+        "table": "Ticket"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"assignedTo\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Ticket",
+          "assignedTo"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop NOT NULL on \"assignedTo\"",
+        "sql": "ALTER TABLE \"public\".\"Ticket\" ALTER COLUMN \"assignedTo\" DROP NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"assignedTo\" is nullable",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"is_nullable\" = $4)) AS \"result\"",
+        "params": [
+          "public",
+          "Ticket",
+          "assignedTo",
+          "YES"
+        ]
+      }
+    ]
+  }
+]
