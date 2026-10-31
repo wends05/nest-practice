@@ -1,10 +1,10 @@
 import z from 'zod';
-import { nameInput, passwordSchema, usernameSchema } from './shared.dto.js';
+import { nameSchema, passwordSchema, usernameSchema } from './shared.dto.js';
 
-export const registerUserInput = z.object({
+export const registerUserInputSchema = z.object({
   username: usernameSchema,
   password: passwordSchema,
-  name: nameInput,
+  name: nameSchema,
 });
 
-export type RegisterUserInput = z.infer<typeof registerUserInput>;
+export type RegisterUserInput = z.infer<typeof registerUserInputSchema>;

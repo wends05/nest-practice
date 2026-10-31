@@ -187,11 +187,13 @@ export class AuthService {
   async validateSession(token: string) {
     const tokenHash = createHash('sha256').update(token).digest('hex');
 
-    const session = await this.prisma.db.orm.public.Session.first({
+    const session = await this.prisma.db.orm.public.Session.where({
       tokenHash,
-    });
+    })
+      .include('user', (u) => u.select('id', 'role'))
+      .first();
 
-    if (!session) {
+    if (!session?.user) {
       return null;
     }
 

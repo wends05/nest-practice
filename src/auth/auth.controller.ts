@@ -12,11 +12,11 @@ import {
 import type { Response } from 'express';
 import { AuthService } from './auth.service.js';
 import { type AuthenticatedRequest, AuthResult } from './auth.types.js';
-import { type LoginUserInput, loginUserInput } from './dto/login.dto.js';
+import { type LoginUserInput, loginUserInputSchema } from './dto/login.dto.js';
 import { LogoutResponse, logoutResponseSchema } from './dto/logout.dto.js';
 import {
   type RegisterUserInput,
-  registerUserInput,
+  registerUserInputSchema,
 } from './dto/register.dto.js';
 import { AuthResponse, authResponseSchema } from './dto/shared.dto.js';
 import { SessionGuard } from './session.guard.js';
@@ -28,7 +28,7 @@ export class AuthController {
   @Post('/login')
   @HttpCode(HttpStatus.OK)
   async login(
-    @Body({ schema: loginUserInput }) user: LoginUserInput,
+    @Body({ schema: loginUserInputSchema }) user: LoginUserInput,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponse> {
     const result = await this.authService.loginUser(user);
@@ -38,7 +38,7 @@ export class AuthController {
 
   @Post('/register')
   async register(
-    @Body({ schema: registerUserInput }) user: RegisterUserInput,
+    @Body({ schema: registerUserInputSchema }) user: RegisterUserInput,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponse> {
     const result = await this.authService.registerUser(user);

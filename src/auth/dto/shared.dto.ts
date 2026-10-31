@@ -4,12 +4,12 @@ export const passwordSchema = z.string().min(8).max(30);
 
 export const usernameSchema = z.string().min(5).max(50);
 
-export const nameInput = z.string().min(5).max(50);
+export const nameSchema = z.string().min(5).max(50);
 
 export const publicUserSchema = z.object({
   id: z.uuidv7(),
   username: usernameSchema,
-  name: nameInput,
+  name: nameSchema,
 });
 
 export type PublicUser = z.infer<typeof publicUserSchema>;
