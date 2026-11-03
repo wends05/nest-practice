@@ -3,7 +3,7 @@ import {
   ticketContentSchema,
   ticketResponseSchema,
   ticketTitleSchema,
-} from './shared.dto';
+} from './shared.dto.js';
 
 export const updateTicketInputSchema = z.object({
   title: ticketTitleSchema.optional(),

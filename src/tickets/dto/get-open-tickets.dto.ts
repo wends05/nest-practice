@@ -1,5 +1,5 @@
 import z from 'zod';
-import { ticketResponseSchema } from './shared.dto';
+import { ticketResponseSchema } from './shared.dto.js';
 
 export const getOpenTicketsOutputSchema = z.object({
   tickets: ticketResponseSchema.array(),

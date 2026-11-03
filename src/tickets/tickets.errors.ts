@@ -1,5 +1,5 @@
 import { HttpStatus } from '@nestjs/common';
-import { AppException } from '../common/errors/app.exception';
+import { AppException } from '../common/errors/app.exception.js';
 
 export const TICKET_ERROR_CODE = {
   TICKET_NOT_FOUND: 'TICKET_NOT_FOUND',

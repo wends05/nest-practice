@@ -33,7 +33,7 @@ export const ticketDetailsResponseSchema = ticketResponseSchema.extend({
   owner: ticketUserDetailsSchema,
   resolver: ticketUserDetailsSchema.nullable(),
   content: ticketContentSchema,
-  reply: ticketReplySchema,
+  reply: ticketReplySchema.nullable(),
 });
 
 export type TicketDetailsResponse = z.infer<typeof ticketDetailsResponseSchema>;

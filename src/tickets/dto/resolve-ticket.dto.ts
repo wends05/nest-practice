@@ -1,5 +1,5 @@
 import z from 'zod';
-import { ticketReplySchema, ticketResponseSchema } from './shared.dto';
+import { ticketReplySchema, ticketResponseSchema } from './shared.dto.js';
 
 export const resolveTicketParamsSchema = z.string();
 

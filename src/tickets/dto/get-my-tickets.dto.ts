@@ -1,6 +1,6 @@
 import z from 'zod';
-import { paginationOptionsSchema } from '../../common/schema/pagination.schema';
-import { ticketFilterQuerySchema, ticketResponseSchema } from './shared.dto';
+import { paginationOptionsSchema } from '../../common/schema/pagination.schema.js';
+import { ticketFilterQuerySchema, ticketResponseSchema } from './shared.dto.js';
 
 export const getMyTicketsQuerySchema = paginationOptionsSchema.extend(
   ticketFilterQuerySchema.shape,

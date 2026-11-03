@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module.js';
 import { PrismaModule } from '../prisma/prisma.module.js';
 import { TicketsController } from './tickets.controller.js';
-import { TicketService } from './tickets.service';
+import { TicketService } from './tickets.service.js';
 
 @Module({
   controllers: [TicketsController],

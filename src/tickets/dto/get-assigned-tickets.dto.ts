@@ -1,6 +1,6 @@
 import z from 'zod';
-import { paginationOptionsSchema } from '../../common/schema/pagination.schema';
-import { ticketResponseSchema, ticketStatusSchema } from './shared.dto';
+import { paginationOptionsSchema } from '../../common/schema/pagination.schema.js';
+import { ticketResponseSchema, ticketStatusSchema } from './shared.dto.js';
 
 export const getAssignedTicketsQuerySchema = paginationOptionsSchema.extend({
   status: ticketStatusSchema.exclude(['OPEN']).optional(),
