@@ -4,6 +4,10 @@
   "target": "postgres",
   "profileHash": "3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2",
   "roots": {
+    "Reply": {
+      "model": "Reply",
+      "namespace": "public"
+    },
     "Session": {
       "model": "Session",
       "namespace": "public"
@@ -21,6 +25,107 @@
     "namespaces": {
       "public": {
         "models": {
+          "Reply": {
+            "fields": {
+              "authorId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/char@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 36
+                  }
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/char@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 36
+                  }
+                }
+              },
+              "message": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "ticketId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "sql/char@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 36
+                  }
+                }
+              }
+            },
+            "relations": {
+              "author": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "authorId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              },
+              "ticket": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "ticketId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Ticket",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "authorId": {
+                  "column": "authorId"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "message": {
+                  "column": "message"
+                },
+                "ticketId": {
+                  "column": "ticketId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "Reply"
+            }
+          },
           "Session": {
             "fields": {
               "createdAt": {
@@ -160,13 +265,6 @@
                   }
                 }
               },
-              "reply": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
               "status": {
                 "nullable": false,
                 "type": {
@@ -198,6 +296,21 @@
                 },
                 "to": {
                   "model": "User",
+                  "namespace": "public"
+                }
+              },
+              "replies": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "ticketId"
+                  ]
+                },
+                "to": {
+                  "model": "Reply",
                   "namespace": "public"
                 }
               },
@@ -233,9 +346,6 @@
                 },
                 "ownedBy": {
                   "column": "ownedBy"
-                },
-                "reply": {
-                  "column": "reply"
                 },
                 "status": {
                   "column": "status"
@@ -375,7 +485,8 @@
               "members": [
                 "OPEN",
                 "ASSIGNED",
-                "CLOSED"
+                "RESOLVED",
+                "DECLINED"
               ],
               "typeName": "TICKET_STATUS"
             },
@@ -389,6 +500,56 @@
             }
           },
           "table": {
+            "Reply": {
+              "columns": {
+                "authorId": {
+                  "codecId": "sql/char@1",
+                  "nativeType": "character",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 36
+                  }
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "sql/char@1",
+                  "nativeType": "character",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 36
+                  }
+                },
+                "message": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "ticketId": {
+                  "codecId": "sql/char@1",
+                  "nativeType": "character",
+                  "nullable": false,
+                  "typeParams": {
+                    "length": 36
+                  }
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
             "Session": {
               "columns": {
                 "createdAt": {
@@ -486,11 +647,6 @@
                   "typeParams": {
                     "length": 36
                   }
-                },
-                "reply": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": true
                 },
                 "status": {
                   "codecId": "pg/enum@1",
@@ -591,7 +747,8 @@
               "values": [
                 "OPEN",
                 "ASSIGNED",
-                "CLOSED"
+                "RESOLVED",
+                "DECLINED"
               ]
             },
             "USER_ROLE": {
@@ -607,12 +764,23 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "11c287e5f580ea9812cf1322bee0b4af234bf5da6d4d8a605e9dc980b8209911"
+    "storageHash": "1f99dd249414f49b1d63bee9fef4cabdba9bec72d1d757dbc6b22068a8524511"
   },
   "execution": {
-    "executionHash": "f2b083aa11bd0d57eb963bfc10e1fea76e61e9cace95bbfe86f9a9a506a4f2cb",
+    "executionHash": "c3adf1660363eb6162aab8100989264fb1a04e74d4be1841c91516ed8460bd70",
     "mutations": {
       "defaults": [
+        {
+          "onCreate": {
+            "id": "uuidv7",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "Reply"
+          }
+        },
         {
           "onCreate": {
             "id": "uuidv7",

@@ -1,0 +1,83 @@
+[
+  {
+    "id": "dropColumn.Ticket.reply",
+    "label": "Drop column \"reply\" from \"Ticket\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "reply",
+        "table": "Ticket"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"reply\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Ticket",
+          "reply"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop column \"reply\"",
+        "sql": "ALTER TABLE \"public\".\"Ticket\" DROP COLUMN \"reply\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"reply\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Ticket",
+          "reply"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.Reply",
+    "label": "Create table \"Reply\"",
+    "summary": "Creates table \"Reply\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Reply"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"Reply\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Reply\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"Reply\"",
+        "sql": "CREATE TABLE \"public\".\"Reply\" (\n  \"authorId\" character(36) NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" character(36) NOT NULL,\n  \"message\" text NOT NULL,\n  \"ticketId\" character(36) NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"Reply\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Reply\""
+        ]
+      }
+    ]
+  }
+]

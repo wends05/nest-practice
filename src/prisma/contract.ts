@@ -10,7 +10,8 @@ export const TICKET_STATUS = nativeEnum(
   'TICKET_STATUS',
   'OPEN',
   'ASSIGNED',
-  'CLOSED',
+  'RESOLVED',
+  'DECLINED',
 );
 
 export const contract = defineContract({}, ({ field, model, rel }) => {
@@ -21,8 +22,17 @@ export const contract = defineContract({}, ({ field, model, rel }) => {
       assignedTo: field.uuidString().optional(),
       title: field.text(),
       content: field.text(),
-      reply: field.text().optional(),
       status: field.column(pg.enum(TICKET_STATUS)).default('OPEN'),
+      createdAt: field.temporal.createdAt(),
+    },
+  });
+
+  const Reply = model('Reply', {
+    fields: {
+      id: field.id.uuidv7String(),
+      ticketId: field.uuidString(),
+      message: field.text(),
+      authorId: field.uuidString(),
       createdAt: field.temporal.createdAt(),
     },
   });
@@ -53,6 +63,7 @@ export const contract = defineContract({}, ({ field, model, rel }) => {
       Ticket: Ticket.relations({
         owner: rel.belongsTo(User, { from: 'ownedBy', to: 'id' }),
         resolver: rel.belongsTo(User, { from: 'assignedTo', to: 'id' }),
+        replies: rel.hasMany(Reply, { by: 'ticketId' }),
       }),
       User: User.relations({
         session: rel.hasMany(Session, { by: 'userId' }),
@@ -61,6 +72,10 @@ export const contract = defineContract({}, ({ field, model, rel }) => {
       }),
       Session: Session.relations({
         user: rel.belongsTo(User, { from: 'userId', to: 'id' }),
+      }),
+      Reply: Reply.relations({
+        ticket: rel.belongsTo(Ticket, { from: 'ticketId', to: 'id' }),
+        author: rel.belongsTo(User, { from: 'authorId', to: 'id' }),
       }),
     },
   };

@@ -1,0 +1,75 @@
+[
+  {
+    "id": "renameNativeEnumValue.TICKET_STATUS.CLOSED",
+    "label": "Rename enum value \"CLOSED\" to \"RESOLVED\" on \"TICKET_STATUS\"",
+    "operationClass": "data",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "type",
+        "name": "TICKET_STATUS"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "rename enum value \"CLOSED\" to \"RESOLVED\"",
+        "sql": "ALTER TYPE \"public\".\"TICKET_STATUS\" RENAME VALUE 'CLOSED' TO 'RESOLVED'",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "addNativeEnumValue.TICKET_STATUS.DECLINED",
+    "label": "Add value \"DECLINED\" to enum type \"TICKET_STATUS\"",
+    "summary": "Adds value \"DECLINED\" to enum type \"TICKET_STATUS\". A newly added enum value cannot be used until the transaction that adds it commits, so a migration that both appends a value and uses it in the same step will fail at apply.",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "type",
+        "name": "TICKET_STATUS"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure enum type \"TICKET_STATUS\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_type\" AS \"t\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"t\".\"typnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"t\".\"typname\" = $2 AND \"t\".\"typtype\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "TICKET_STATUS",
+          "e"
+        ]
+      },
+      {
+        "description": "ensure value \"DECLINED\" is absent from enum type \"TICKET_STATUS\"",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_enum\" AS \"e\" INNER JOIN \"pg_type\" AS \"t\" ON \"t\".\"oid\" = \"e\".\"enumtypid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"t\".\"typnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"t\".\"typname\" = $2 AND \"e\".\"enumlabel\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "TICKET_STATUS",
+          "DECLINED"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add value \"DECLINED\" to enum type \"TICKET_STATUS\"",
+        "sql": "ALTER TYPE \"public\".\"TICKET_STATUS\" ADD VALUE 'DECLINED'"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify value \"DECLINED\" exists on enum type \"TICKET_STATUS\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_enum\" AS \"e\" INNER JOIN \"pg_type\" AS \"t\" ON \"t\".\"oid\" = \"e\".\"enumtypid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"t\".\"typnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"t\".\"typname\" = $2 AND \"e\".\"enumlabel\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "TICKET_STATUS",
+          "DECLINED"
+        ]
+      }
+    ]
+  }
+]

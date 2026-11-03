@@ -33,9 +33,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'11c287e5f580ea9812cf1322bee0b4af234bf5da6d4d8a605e9dc980b8209911'>;
+  StorageHashBase<'1f99dd249414f49b1d63bee9fef4cabdba9bec72d1d757dbc6b22068a8524511'>;
 export type ExecutionHash =
-  ExecutionHashBase<'f2b083aa11bd0d57eb963bfc10e1fea76e61e9cace95bbfe86f9a9a506a4f2cb'>;
+  ExecutionHashBase<'c3adf1660363eb6162aab8100989264fb1a04e74d4be1841c91516ed8460bd70'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -241,6 +241,13 @@ type DefaultLiteralValue<CodecId extends string, Encoded> = CodecId extends keyo
 
 export type FieldOutputTypes = {
   readonly public: {
+    readonly Reply: {
+      readonly id: Char<36>;
+      readonly ticketId: Char<36>;
+      readonly message: CodecTypes['pg/text@1']['output'];
+      readonly authorId: Char<36>;
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    };
     readonly Session: {
       readonly id: Char<36>;
       readonly userId: Char<36>;
@@ -255,8 +262,7 @@ export type FieldOutputTypes = {
       readonly assignedTo: Char<36> | null;
       readonly title: CodecTypes['pg/text@1']['output'];
       readonly content: CodecTypes['pg/text@1']['output'];
-      readonly reply: CodecTypes['pg/text@1']['output'] | null;
-      readonly status: 'OPEN' | 'ASSIGNED' | 'CLOSED';
+      readonly status: 'OPEN' | 'ASSIGNED' | 'RESOLVED' | 'DECLINED';
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
     readonly User: {
@@ -270,6 +276,13 @@ export type FieldOutputTypes = {
 };
 export type FieldInputTypes = {
   readonly public: {
+    readonly Reply: {
+      readonly id: CodecTypes['sql/char@1']['input'];
+      readonly ticketId: CodecTypes['sql/char@1']['input'];
+      readonly message: CodecTypes['pg/text@1']['input'];
+      readonly authorId: CodecTypes['sql/char@1']['input'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+    };
     readonly Session: {
       readonly id: CodecTypes['sql/char@1']['input'];
       readonly userId: CodecTypes['sql/char@1']['input'];
@@ -284,8 +297,7 @@ export type FieldInputTypes = {
       readonly assignedTo: CodecTypes['sql/char@1']['input'] | null;
       readonly title: CodecTypes['pg/text@1']['input'];
       readonly content: CodecTypes['pg/text@1']['input'];
-      readonly reply: CodecTypes['pg/text@1']['input'] | null;
-      readonly status: 'OPEN' | 'ASSIGNED' | 'CLOSED';
+      readonly status: 'OPEN' | 'ASSIGNED' | 'RESOLVED' | 'DECLINED';
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
     readonly User: {
@@ -299,6 +311,13 @@ export type FieldInputTypes = {
 };
 export type StorageColumnTypes = {
   readonly public: {
+    readonly Reply: {
+      readonly authorId: Char<36>;
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+      readonly id: Char<36>;
+      readonly message: CodecTypes['pg/text@1']['output'];
+      readonly ticketId: Char<36>;
+    };
     readonly Session: {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly expiresAt: CodecTypes['pg/timestamptz-string@1']['output'];
@@ -313,8 +332,7 @@ export type StorageColumnTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly id: Char<36>;
       readonly ownedBy: Char<36>;
-      readonly reply: CodecTypes['pg/text@1']['output'] | null;
-      readonly status: 'OPEN' | 'ASSIGNED' | 'CLOSED';
+      readonly status: 'OPEN' | 'ASSIGNED' | 'RESOLVED' | 'DECLINED';
       readonly title: CodecTypes['pg/text@1']['output'];
     };
     readonly User: {
@@ -328,6 +346,13 @@ export type StorageColumnTypes = {
 };
 export type StorageColumnInputTypes = {
   readonly public: {
+    readonly Reply: {
+      readonly authorId: CodecTypes['sql/char@1']['input'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+      readonly id: CodecTypes['sql/char@1']['input'];
+      readonly message: CodecTypes['pg/text@1']['input'];
+      readonly ticketId: CodecTypes['sql/char@1']['input'];
+    };
     readonly Session: {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly expiresAt: CodecTypes['pg/timestamptz-string@1']['input'];
@@ -342,8 +367,7 @@ export type StorageColumnInputTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly id: CodecTypes['sql/char@1']['input'];
       readonly ownedBy: CodecTypes['sql/char@1']['input'];
-      readonly reply: CodecTypes['pg/text@1']['input'] | null;
-      readonly status: 'OPEN' | 'ASSIGNED' | 'CLOSED';
+      readonly status: 'OPEN' | 'ASSIGNED' | 'RESOLVED' | 'DECLINED';
       readonly title: CodecTypes['pg/text@1']['input'];
     };
     readonly User: {
@@ -373,6 +397,43 @@ type ContractBase = Omit<
         readonly kind: 'postgres-schema';
         readonly entries: {
           readonly table: {
+            readonly Reply: {
+              columns: {
+                readonly id: {
+                  readonly nativeType: 'character';
+                  readonly codecId: 'sql/char@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly length: 36 };
+                };
+                readonly ticketId: {
+                  readonly nativeType: 'character';
+                  readonly codecId: 'sql/char@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly length: 36 };
+                };
+                readonly message: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly authorId: {
+                  readonly nativeType: 'character';
+                  readonly codecId: 'sql/char@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly length: 36 };
+                };
+                readonly createdAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [];
+              indexes: readonly [];
+              foreignKeys: readonly [];
+            };
             readonly Session: {
               columns: {
                 readonly id: {
@@ -444,11 +505,6 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
                 };
-                readonly reply: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: true;
-                };
                 readonly status: {
                   readonly nativeType: 'TICKET_STATUS';
                   readonly codecId: 'pg/enum@1';
@@ -514,7 +570,7 @@ type ContractBase = Omit<
           readonly valueSet: {
             readonly TICKET_STATUS: {
               readonly kind: 'valueSet';
-              readonly values: readonly ['OPEN', 'ASSIGNED', 'CLOSED'];
+              readonly values: readonly ['OPEN', 'ASSIGNED', 'RESOLVED', 'DECLINED'];
             };
             readonly USER_ROLE: {
               readonly kind: 'valueSet';
@@ -534,11 +590,83 @@ type ContractBase = Omit<
     readonly Ticket: { readonly namespace: 'public' & NamespaceId; readonly model: 'Ticket' };
     readonly User: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
     readonly Session: { readonly namespace: 'public' & NamespaceId; readonly model: 'Session' };
+    readonly Reply: { readonly namespace: 'public' & NamespaceId; readonly model: 'Reply' };
   };
   readonly domain: {
     readonly namespaces: {
       readonly public: {
         readonly models: {
+          readonly Reply: {
+            readonly fields: {
+              readonly id: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'sql/char@1';
+                  readonly typeParams: { readonly length: 36 };
+                };
+              };
+              readonly ticketId: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'sql/char@1';
+                  readonly typeParams: { readonly length: 36 };
+                };
+              };
+              readonly message: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly authorId: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'sql/char@1';
+                  readonly typeParams: { readonly length: 36 };
+                };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                };
+              };
+            };
+            readonly relations: {
+              readonly ticket: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Ticket';
+                };
+                readonly cardinality: 'N:1';
+                readonly on: {
+                  readonly localFields: readonly ['ticketId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly author: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly on: {
+                  readonly localFields: readonly ['authorId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'Reply';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly id: { readonly column: 'id' };
+                readonly ticketId: { readonly column: 'ticketId' };
+                readonly message: { readonly column: 'message' };
+                readonly authorId: { readonly column: 'authorId' };
+                readonly createdAt: { readonly column: 'createdAt' };
+              };
+            };
+          };
           readonly Session: {
             readonly fields: {
               readonly id: {
@@ -640,10 +768,6 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
-              readonly reply: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
               readonly status: {
                 readonly nullable: false;
                 readonly type: {
@@ -677,6 +801,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
+              readonly replies: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Reply';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['ticketId'];
+                };
+              };
             };
             readonly storage: {
               readonly table: 'Ticket';
@@ -687,7 +822,6 @@ type ContractBase = Omit<
                 readonly assignedTo: { readonly column: 'assignedTo' };
                 readonly title: { readonly column: 'title' };
                 readonly content: { readonly column: 'content' };
-                readonly reply: { readonly column: 'reply' };
                 readonly status: { readonly column: 'status' };
                 readonly createdAt: { readonly column: 'createdAt' };
               };
@@ -798,6 +932,14 @@ type ContractBase = Omit<
     readonly executionHash: ExecutionHash;
     readonly mutations: {
       readonly defaults: readonly [
+        {
+          readonly ref: {
+            readonly namespace: 'public';
+            readonly table: 'Reply';
+            readonly column: 'id';
+          };
+          readonly onCreate: { readonly kind: 'generator'; readonly id: 'uuidv7' };
+        },
         {
           readonly ref: {
             readonly namespace: 'public';
