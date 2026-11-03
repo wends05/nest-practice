@@ -1,9 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { uuidSchema } from '../common/schema/uuid.schema.js';
 import { SessionInvalidError } from './auth.errors.js';
 import { AuthService } from './auth.service.js';
-import { AuthenticatedRequest } from './auth.types.js';
-import { roleSchema } from './dto/role.dto.js';
+import { AuthenticatedRequest, authContextSchema } from './dto/shared.dto.js';
 
 @Injectable()
 export class SessionGuard implements CanActivate {
@@ -23,13 +21,14 @@ export class SessionGuard implements CanActivate {
       throw new SessionInvalidError();
     }
 
-    const parsedUserId = uuidSchema.parse(session.userId);
-    const parsedUserRole = roleSchema.parse(session.user?.role);
-    request.auth = {
-      userId: parsedUserId,
+    request.auth = authContextSchema.parse({
+      user: session.user,
+      userId: session.user?.id,
       sessionId: session.id,
-      role: parsedUserRole,
-    };
+      role: session.user?.role,
+      name: session.user?.name,
+      username: session.user?.username,
+    });
 
     return true;
   }

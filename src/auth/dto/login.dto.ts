@@ -1,9 +1,9 @@
 import z from 'zod';
-import { passwordSchema, usernameSchema } from './shared.dto.js';
+import { usernameSchema } from './shared.dto.js';
 
 export const loginUserInputSchema = z.object({
   username: usernameSchema,
-  password: passwordSchema,
+  password: z.string().min(1).max(256),
 });
 
 export type LoginUserInput = z.infer<typeof loginUserInputSchema>;

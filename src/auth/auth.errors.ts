@@ -6,6 +6,8 @@ export const AUTH_ERROR_CODE = {
   USER_EXISTS: 'USER_EXISTS',
   USER_NOT_FOUND: 'USER_NOT_FOUND',
   SESSION_INVALID: 'SESSION_INVALID',
+  PASSWORD_UNCHANGED: 'PASSWORD_UNCHANGED',
+  INVALID_CURRENT_PASSWORD: 'INVALID_CURRENT_PASSWORD',
 } as const;
 
 export class InvalidCredentialsError extends AppException {
@@ -44,6 +46,26 @@ export class SessionInvalidError extends AppException {
       HttpStatus.UNAUTHORIZED,
       AUTH_ERROR_CODE.SESSION_INVALID,
       'Session invalid',
+    );
+  }
+}
+
+export class PasswordUnchangedError extends AppException {
+  constructor() {
+    super(
+      HttpStatus.BAD_REQUEST,
+      AUTH_ERROR_CODE.PASSWORD_UNCHANGED,
+      'Password unchanged',
+    );
+  }
+}
+
+export class InvalidCurrentPasswordError extends AppException {
+  constructor() {
+    super(
+      HttpStatus.BAD_REQUEST,
+      AUTH_ERROR_CODE.INVALID_CURRENT_PASSWORD,
+      'Invalid current password',
     );
   }
 }

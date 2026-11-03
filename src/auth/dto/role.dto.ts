@@ -1,5 +1,5 @@
 import z from 'zod';
-import { USER_ROLE } from '../../prisma/contract';
+import { USER_ROLE } from '../../prisma/contract.js';
 
 export const roleSchema = z.enum(USER_ROLE.members);
 

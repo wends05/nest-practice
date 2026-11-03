@@ -10,10 +10,10 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { type AuthenticatedRequest } from '../auth/auth.types.js';
+import { type AuthenticatedRequest } from '../auth/dto/shared.dto.js';
 import { RoleGuard } from '../auth/role.guard.js';
 import { Roles } from '../auth/roles.decorator.js';
-import { SessionGuard } from '../auth/session.guard';
+import { SessionGuard } from '../auth/session.guard.js';
 import {
   type PaginationOptions,
   paginationOptionsSchema,
@@ -29,7 +29,7 @@ import {
   CreateTicketOutput,
   createTicketInputSchema,
   createTicketOutputSchema,
-} from './dto/create-ticket.dto';
+} from './dto/create-ticket.dto.js';
 import {
   DeleteTicketOutput,
   deleteTicketOutputSchema,
@@ -69,7 +69,7 @@ import {
   updateTicketInputSchema,
   updateTicketOutputSchema,
 } from './dto/update-ticket.dto.js';
-import { TicketService } from './tickets.service';
+import { TicketService } from './tickets.service.js';
 
 @Controller('/tickets')
 export class TicketsController {

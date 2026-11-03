@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   Req,
   Res,
@@ -12,14 +13,31 @@ import {
 import type { Response } from 'express';
 import { env } from '../config/env.js';
 import { AuthService } from './auth.service.js';
-import { type AuthenticatedRequest, AuthResult } from './auth.types.js';
 import { type LoginUserInput, loginUserInputSchema } from './dto/login.dto.js';
 import { LogoutResponse, logoutResponseSchema } from './dto/logout.dto.js';
 import {
   type RegisterUserInput,
   registerUserInputSchema,
 } from './dto/register.dto.js';
-import { AuthResponse, authResponseSchema } from './dto/shared.dto.js';
+import {
+  type AuthenticatedRequest,
+  type AuthResponse,
+  AuthResult,
+  authResponseSchema,
+  authResultSchema,
+} from './dto/shared.dto.js';
+import {
+  type UpdatePasswordInput,
+  UpdatePasswordOutput,
+  updatePasswordInputSchema,
+  updatePasswordOutputSchema,
+} from './dto/update-password.dto.js';
+import {
+  type UpdateUserInput,
+  UpdateUserOutput,
+  updateUserInputSchema,
+  updateUserOutputSchema,
+} from './dto/update-user.dto.js';
 import { SessionGuard } from './session.guard.js';
 
 @Controller('auth')
@@ -34,7 +52,13 @@ export class AuthController {
   ): Promise<AuthResponse> {
     const result = await this.authService.loginUser(user);
 
-    return await this.completeAuthentication(res, result);
+    const authResult = this.completeAuthentication(res, result);
+
+    const parsedResponse = authResponseSchema.parse({
+      user: authResult.user,
+      message: 'User logged in successfully',
+    });
+    return parsedResponse;
   }
 
   @Post('/register')
@@ -44,15 +68,57 @@ export class AuthController {
   ): Promise<AuthResponse> {
     const result = await this.authService.registerUser(user);
 
-    return await this.completeAuthentication(res, result);
+    const authResult = this.completeAuthentication(res, result);
+
+    const parsedResponse = authResponseSchema.parse({
+      user: authResult.user,
+      message: 'User registered successfully',
+    });
+    return parsedResponse;
   }
 
   @Get('/me')
   @UseGuards(SessionGuard)
-  getAuth(@Req() request: AuthenticatedRequest) {
-    return {
-      userId: request.auth.userId,
-    };
+  getAuth(@Req() request: AuthenticatedRequest): AuthResponse {
+    const { userId, username, name, role } = request.auth;
+
+    const parsedResponse = authResponseSchema.parse({
+      user: { id: userId, username, name, role },
+      message: 'User retrieved successfully',
+    });
+    return parsedResponse;
+  }
+
+  @Patch('/me')
+  @UseGuards(SessionGuard)
+  async updateUser(
+    @Req() request: AuthenticatedRequest,
+    @Body({ schema: updateUserInputSchema }) user: UpdateUserInput,
+  ): Promise<UpdateUserOutput> {
+    const updatedUser = await this.authService.updateUser(
+      request.auth.userId,
+      user,
+    );
+    return updateUserOutputSchema.parse({
+      user: updatedUser,
+      message: 'User updated successfully',
+    });
+  }
+
+  @Patch('/password')
+  @UseGuards(SessionGuard)
+  async updatePassword(
+    @Req() request: AuthenticatedRequest,
+    @Body({ schema: updatePasswordInputSchema }) input: UpdatePasswordInput,
+  ): Promise<UpdatePasswordOutput> {
+    await this.authService.updatePassword(
+      request.auth.userId,
+      request.auth.sessionId,
+      input,
+    );
+    return updatePasswordOutputSchema.parse({
+      message: 'Password updated successfully',
+    });
   }
 
   @Post('/logout')
@@ -71,8 +137,14 @@ export class AuthController {
     return parsedResponse;
   }
 
-  private async completeAuthentication(response: Response, result: AuthResult) {
-    const body = authResponseSchema.parse({ user: result.user });
+  private completeAuthentication(
+    response: Response,
+    result: AuthResult,
+  ): AuthResult {
+    const body = authResultSchema.parse({
+      user: result.user,
+      session: result.session,
+    });
 
     // sets the cookie after authentication
     // (usually after login or registration of account)

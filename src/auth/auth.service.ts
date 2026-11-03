@@ -7,11 +7,24 @@ import {
 import { Injectable } from '@nestjs/common';
 import type { Uuid } from '../common/schema/uuid.schema.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { InvalidCredentialsError, UserExistsError } from './auth.errors.js';
-import { AuthResult, Session } from './auth.types.js';
+import {
+  InvalidCredentialsError,
+  InvalidCurrentPasswordError,
+  PasswordUnchangedError,
+  UserExistsError,
+  UserNotFoundError,
+} from './auth.errors.js';
 import { LoginUserInput } from './dto/login.dto.js';
 import { LogoutResponse } from './dto/logout.dto.js';
 import { RegisterUserInput } from './dto/register.dto.js';
+import {
+  AuthResult,
+  PublicUser,
+  publicUserSchema,
+  Session,
+} from './dto/shared.dto.js';
+import { UpdatePasswordInput } from './dto/update-password.dto.js';
+import { UpdateUserInput } from './dto/update-user.dto.js';
 
 const SCRYPT_COST = 16_384;
 const SCRYPT_BLOCK_SIZE = 8;
@@ -98,7 +111,9 @@ export class AuthService {
     return timingSafeEqual(actualHash, expectedHash);
   }
 
-  // create a user
+  /*
+   * create a user
+   */
   async registerUser(data: RegisterUserInput): Promise<AuthResult> {
     // check first if the user already exists using the username (non strict)
     const existingUser = await this.prisma.db.orm.public.User.where((u) =>
@@ -120,12 +135,19 @@ export class AuthService {
     const session = await this.createSession(newUser.id);
 
     return {
-      user: { id: newUser.id, username: newUser.username, name: newUser.name },
+      user: {
+        id: newUser.id,
+        username: newUser.username,
+        name: newUser.name,
+        role: newUser.role,
+      },
       session,
     };
   }
 
-  // login a user
+  /*
+   * login a user
+   */
   async loginUser(data: LoginUserInput): Promise<AuthResult> {
     const user = await this.prisma.db.orm.public.User.first({
       username: data.username,
@@ -146,6 +168,7 @@ export class AuthService {
     return {
       user: {
         id: user.id,
+        role: user.role,
         username: user.username,
         name: user.name,
       },
@@ -153,7 +176,9 @@ export class AuthService {
     };
   }
 
-  // logout a user
+  /*
+   * logout a user
+   */
   async logoutUser(sessionId: Uuid): Promise<LogoutResponse> {
     await this.prisma.db.orm.public.Session.where({ id: sessionId }).update({
       revokedAt: new Date().toISOString(),
@@ -164,7 +189,9 @@ export class AuthService {
     };
   }
 
-  // create a session for the user
+  /*
+   * create a session for the user
+   */
   private async createSession(userId: Uuid): Promise<Session> {
     const token = randomBytes(32).toString('base64url');
 
@@ -184,13 +211,16 @@ export class AuthService {
     };
   }
 
+  /*
+   * validate a session
+   */
   async validateSession(token: string) {
     const tokenHash = createHash('sha256').update(token).digest('hex');
 
     const session = await this.prisma.db.orm.public.Session.where({
       tokenHash,
     })
-      .include('user', (u) => u.select('id', 'role'))
+      .include('user', (u) => u.select('id', 'role', 'name', 'username'))
       .first();
 
     if (!session?.user) {
@@ -208,9 +238,57 @@ export class AuthService {
     return session;
   }
 
-  // remove a user
-  async removeUser(userId: Uuid): Promise<void> {}
+  /*
+   * Update a user
+   */
+  async updateUser(userId: Uuid, user: UpdateUserInput): Promise<PublicUser> {
+    const updatedUser = await this.prisma.db.orm.public.User.where({
+      id: userId,
+    }).update(user);
+    return publicUserSchema.parse(updatedUser);
+  }
 
-  // update a password
-  async updatePassword(userId: Uuid, password: string): Promise<void> {}
+  /*
+   * update a password
+   */
+  async updatePassword(
+    userId: Uuid,
+    sessionId: Uuid,
+    { currentPassword, newPassword }: UpdatePasswordInput,
+  ): Promise<void> {
+    if (currentPassword === newPassword) {
+      throw new PasswordUnchangedError();
+    }
+
+    const user = await this.prisma.db.orm.public.User.where({
+      id: userId,
+    }).first();
+    if (!user) {
+      throw new UserNotFoundError();
+    }
+
+    const passwordVerified = await this.verifyPassword(
+      currentPassword,
+      user.passwordHash,
+    );
+
+    if (!passwordVerified) {
+      throw new InvalidCurrentPasswordError();
+    }
+
+    const newPasswordHash = await this.hashPassword(newPassword);
+
+    await this.prisma.db.transaction(async (tx) => {
+      await tx.orm.public.User.where({ id: userId }).update({
+        passwordHash: newPasswordHash,
+      });
+
+      await tx.orm.public.Session.where((session) => session.id.neq(sessionId))
+        .where({ userId })
+        .where({ revokedAt: null })
+        .updateAndCount({
+          revokedAt: new Date().toISOString(),
+        });
+    });
+  }
 }
