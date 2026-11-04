@@ -8,7 +8,7 @@ export const ticketContentSchema = z.string().max(200);
 
 export const ticketStatusSchema = z.enum(TICKET_STATUS.members);
 
-export const ticketReplySchema = z.string().min(10).max(200);
+export const replyMessageSchema = z.string().trim().min(1).max(2000);
 
 export type TicketStatus = z.infer<typeof ticketStatusSchema>;
 
@@ -27,13 +27,23 @@ export const ticketUserDetailsSchema = z.object({
   username: z.string(),
 });
 
+// Reply related schemas
+export const replyResponseSchema = z.object({
+  id: uuidSchema,
+  message: replyMessageSchema,
+  createdAt: z.iso.datetime(),
+  author: ticketUserDetailsSchema,
+});
+
+export type ReplyResponse = z.infer<typeof replyResponseSchema>;
+
 export type TicketUserDetails = z.infer<typeof ticketUserDetailsSchema>;
 
 export const ticketDetailsResponseSchema = ticketResponseSchema.extend({
   owner: ticketUserDetailsSchema,
   resolver: ticketUserDetailsSchema.nullable(),
   content: ticketContentSchema,
-  reply: ticketReplySchema.nullable(),
+  replies: replyResponseSchema.array(),
 });
 
 export type TicketDetailsResponse = z.infer<typeof ticketDetailsResponseSchema>;

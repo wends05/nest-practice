@@ -6,7 +6,10 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateTicketInput } from './dto/create-ticket.dto.js';
 import { GetAssignedTicketsQuery } from './dto/get-assigned-tickets.dto.js';
 import { GetMyTicketsQuery } from './dto/get-my-tickets.dto.js';
+import { AllowedResolveTicketStatus } from './dto/resolve-ticket.dto.js';
 import {
+  ReplyResponse,
+  replyResponseSchema,
   TicketDetailsResponse,
   TicketResponse,
   ticketDetailsResponseSchema,
@@ -81,6 +84,12 @@ export class TicketService {
     })
       .include('owner', (o) => o.select('id', 'name', 'username'))
       .include('resolver', (o) => o.select('id', 'name', 'username'))
+      .include('replies', (r) =>
+        r
+          .select('id', 'message', 'createdAt')
+          .include('author', (a) => a.select('id', 'name', 'username'))
+          .orderBy((r) => r.createdAt.asc()),
+      )
       .first();
 
     if (!ticket) {
@@ -97,7 +106,13 @@ export class TicketService {
       );
     }
 
-    const parsedTicket = ticketDetailsResponseSchema.parse(ticket);
+    const parsedTicket = ticketDetailsResponseSchema.parse({
+      ...ticket,
+      replies: ticket.replies.map((r) => ({
+        ...r,
+        createdAt: r.createdAt.toString(),
+      })),
+    });
 
     return parsedTicket;
   }
@@ -186,12 +201,13 @@ export class TicketService {
   }
 
   /**
-   * Transitions the status of ticket to 'CLOSED' as a resolver.
+   * Transitions the status of ticket to 'RESOLVED' or 'DECLINED' as a resolver.
    */
   async resolveTicket(
     userId: Uuid,
     ticketId: Uuid,
-    reply: string,
+    message: string,
+    status: AllowedResolveTicketStatus,
   ): Promise<TicketResponse> {
     // ensure that the user is a resolver of the ticket
 
@@ -215,15 +231,23 @@ export class TicketService {
       );
     }
 
-    const updatedTicket = await this.prisma.db.orm.public.Ticket.where({
-      id: ticketId,
-      assignedTo: userId,
-      status: 'ASSIGNED',
-    }).update({ status: 'CLOSED', reply });
+    const updatedTicket = await this.prisma.db.transaction(async (tx) => {
+      const updatedTicket = await tx.orm.public.Ticket.where({
+        id: ticketId,
+        assignedTo: userId,
+        status: 'ASSIGNED',
+      }).update({ status });
 
-    if (!updatedTicket) {
-      throw new TicketNotEditableException();
-    }
+      if (!updatedTicket) {
+        throw new TicketNotEditableException();
+      }
+      await tx.orm.public.Reply.create({
+        ticketId,
+        message,
+        authorId: userId,
+      });
+      return updatedTicket;
+    });
 
     const parsedTicket = ticketResponseSchema.parse(updatedTicket);
 
@@ -246,8 +270,13 @@ export class TicketService {
       throw new TicketNotOwnedException();
     }
 
+    if (ticket.status !== 'OPEN') {
+      throw new TicketNotEditableException();
+    }
+
     const deletedTicket = await this.prisma.db.orm.public.Ticket.where({
       id: ticketId,
+      status: 'OPEN',
     }).delete();
 
     if (!deletedTicket) {
@@ -294,5 +323,47 @@ export class TicketService {
 
     const parsedOpenTickets = ticketResponseSchema.array().parse(openTickets);
     return parsedOpenTickets;
+  }
+
+  /**
+   * Create a reply to the user
+   */
+  async createReply(
+    userId: Uuid,
+    ticketId: Uuid,
+    message: string,
+  ): Promise<ReplyResponse> {
+    const ticket = await this.prisma.db.orm.public.Ticket.where({
+      id: ticketId,
+    }).first();
+
+    if (!ticket) {
+      throw new TicketNotFoundException();
+    }
+
+    if (ticket.ownedBy !== userId && ticket.assignedTo !== userId) {
+      throw new TicketNotFoundException();
+    }
+
+    if (ticket.status !== 'ASSIGNED') {
+      throw new TicketNotEditableException();
+    }
+
+    const { id } = await this.prisma.db.orm.public.Reply.create({
+      ticketId: ticket.id,
+      authorId: userId,
+      message,
+    });
+
+    const returnedReply = await this.prisma.db.orm.public.Reply.where({
+      id,
+    })
+      .include('author', (a) => a.select('id', 'name', 'username'))
+      .first();
+
+    return replyResponseSchema.parse({
+      ...returnedReply,
+      createdAt: returnedReply?.createdAt.toString(),
+    });
   }
 }

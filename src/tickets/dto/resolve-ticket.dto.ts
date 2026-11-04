@@ -1,10 +1,23 @@
 import z from 'zod';
-import { ticketReplySchema, ticketResponseSchema } from './shared.dto.js';
+import {
+  replyMessageSchema,
+  ticketResponseSchema,
+  ticketStatusSchema,
+} from './shared.dto.js';
 
 export const resolveTicketParamsSchema = z.string();
 
+export const allowedResolveTicketStatusSchema = ticketStatusSchema.exclude([
+  'ASSIGNED',
+  'OPEN',
+]);
+
+export type AllowedResolveTicketStatus = z.infer<
+  typeof allowedResolveTicketStatusSchema
+>;
+
 export const resolveTicketInputSchema = z.object({
-  reply: ticketReplySchema,
+  message: replyMessageSchema,
 });
 
 export type ResolveTicketInput = z.infer<typeof resolveTicketInputSchema>;

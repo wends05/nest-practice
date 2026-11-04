@@ -25,6 +25,13 @@ import {
   acceptTicketParamsSchema,
 } from './dto/accept-ticket.dto.js';
 import {
+  type CreateReplyInput,
+  CreateReplyOutput,
+  createReplyInputSchema,
+  createReplyOutputSchema,
+  createReplyParamsSchema,
+} from './dto/create-reply.dto.js';
+import {
   type CreateTicketInput,
   CreateTicketOutput,
   createTicketInputSchema,
@@ -241,11 +248,56 @@ export class TicketsController {
     const updatedTicket = await this.ticketsService.resolveTicket(
       req.auth.userId,
       parsedTicketId,
-      resolveTicketInput.reply,
+      resolveTicketInput.message,
+      'RESOLVED',
     );
     const parsedResponse = resolveTicketOutputSchema.parse({
       ticket: updatedTicket,
       message: 'Ticket resolved successfully.',
+    });
+    return parsedResponse;
+  }
+
+  @Patch('/:id/decline')
+  @UseGuards(SessionGuard, RoleGuard)
+  @Roles(['ADMIN'])
+  async declineTicket(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', { schema: resolveTicketParamsSchema }) id: string,
+    @Body({ schema: resolveTicketInputSchema })
+    resolveTicketInput: ResolveTicketInput,
+  ): Promise<ResolveTicketOutput> {
+    const parsedTicketId = uuidSchema.parse(id);
+    const updatedTicket = await this.ticketsService.resolveTicket(
+      req.auth.userId,
+      parsedTicketId,
+      resolveTicketInput.message,
+      'DECLINED',
+    );
+    const parsedResponse = resolveTicketOutputSchema.parse({
+      ticket: updatedTicket,
+      message: 'Ticket declined successfully.',
+    });
+    return parsedResponse;
+  }
+
+  @Post('/:id/replies')
+  @UseGuards(SessionGuard)
+  async sendReply(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', { schema: createReplyParamsSchema }) id: string,
+    @Body({ schema: createReplyInputSchema })
+    createReplyInput: CreateReplyInput,
+  ): Promise<CreateReplyOutput> {
+    const parsedTicketId = uuidSchema.parse(id);
+    const createdReply = await this.ticketsService.createReply(
+      req.auth.userId,
+      parsedTicketId,
+      createReplyInput.message,
+    );
+    const parsedResponse = createReplyOutputSchema.parse({
+      reply: createdReply,
+      message: 'Reply sent successfully.',
     });
     return parsedResponse;
   }
